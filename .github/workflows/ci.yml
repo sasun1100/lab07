@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake build-essential
+
+      - name: Cache Hunter
+        uses: actions/cache@v4
+        with:
+          path: ~/.hunter
+          key: hunter-${{ runner.os }}-${{ hashFiles('cmake/Hunter/config.cmake', 'CMakeLists.txt') }}
+
+      - name: Configure
+        run: cmake -H. -B_builds -DBUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build _builds
+
+      - name: Run tests
+        run: ctest --test-dir _builds --output-on-failure
